@@ -1,0 +1,20 @@
+{
+  "name": "up2you-video",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "render": "remotion render Up2YouAd"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@remotion/cli": "^4.0.435",
+    "@remotion/renderer": "^4.0.435",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.435"
+  }
+}
