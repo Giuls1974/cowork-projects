@@ -13,6 +13,44 @@ Scenes:
 import os, math, subprocess, shutil
 from PIL import Image, ImageDraw, ImageFont
 
+# ── Badge logos ────────────────────────────────────────────────────────────────
+LOGOS_DIR = "/sessions/brave-gallant-brahmagupta/up2you-video/logos"
+
+def _load_logo(path, max_h):
+    """Load RGBA logo and scale to max_h pixels tall."""
+    try:
+        im = Image.open(path).convert("RGBA")
+        scale = max_h / im.height
+        return im.resize((int(im.width * scale), max_h), Image.LANCZOS)
+    except Exception:
+        return None
+
+_BCORP_LOGO = None
+_UNGC_LOGO  = None
+
+def get_bcorp(h=90):
+    global _BCORP_LOGO
+    if _BCORP_LOGO is None:
+        _BCORP_LOGO = _load_logo(f"{LOGOS_DIR}/bcorp.png", h)
+    return _BCORP_LOGO
+
+def get_ungc(h=55):
+    global _UNGC_LOGO
+    if _UNGC_LOGO is None:
+        _UNGC_LOGO = _load_logo(f"{LOGOS_DIR}/ungc.png", h)
+    return _UNGC_LOGO
+
+def paste_logo(img, logo, cx, cy, alpha=1.0):
+    """Paste a logo centred at (cx, cy) with alpha."""
+    if logo is None or alpha <= 0: return
+    w, h = logo.size
+    x, y = cx - w//2, cy - h//2
+    if alpha < 1.0:
+        r, g, b, a = logo.split()
+        a = a.point(lambda p: int(p * alpha))
+        logo = Image.merge("RGBA", (r, g, b, a))
+    img.paste(logo, (x, y), mask=logo)
+
 # ── Config ────────────────────────────────────────────────────────────────────
 FPS        = 30
 DURATION   = 15
@@ -340,12 +378,25 @@ def scene_proof(img, gf):
     txt(img, num_txt2,         x_r, 240 + int(lerp(35,0,p1)), f_num, MINT,  op1)
     txt(img, "Esperti nel team",x_r, 330 + int(lerp(30,0,p1)), f_lbl, WHITE, op1)
 
-    # B Corp badge text
+    # Official logos: B Corp + UN Global Compact
     op2 = clamp(interp(p2, 0, 0.4, 0, al))
-    rrect(img, W//2 - 120, 400 + int(lerp(20,0,p2)), 240, 40, 20,
-          TEAL_LIGHT, op2 * 0.3, MINT, op2 * 0.6)
-    cert_t = "Certified B Corp  ·  UN Global Compact"
-    txt(img, cert_t, W//2 - tw(cert_t, f_cert)//2, 412 + int(lerp(20,0,p2)), f_cert, WHITE, op2)
+    dy2 = int(lerp(20, 0, p2))
+
+    bcorp = get_bcorp(h=90)
+    ungc  = get_ungc(h=50)
+
+    # B Corp centred left of middle
+    if bcorp:
+        paste_logo(img, bcorp, W//2 - 155, 450 + dy2, alpha=op2)
+    # thin divider
+    if op2 > 0:
+        tmp = Image.new("RGBA", img.size, (0,0,0,0))
+        ImageDraw.Draw(tmp).line([(W//2 - 60, 415 + dy2), (W//2 - 60, 495 + dy2)],
+                                  fill=(*MINT, int(80 * op2)), width=1)
+        img.paste(tmp, mask=tmp)
+    # UNGC centred right of middle
+    if ungc:
+        paste_logo(img, ungc, W//2 + 120, 453 + dy2, alpha=op2)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Scene 5 · CLOSING CTA  (f 365 → 450)
